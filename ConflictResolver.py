@@ -20,8 +20,9 @@ email                : elpaso@itopen.it
 import os
 import sys
 import json
+import sip
 from functools import partial
-from ctypes import CDLL
+from ctypes import CDLL, c_bool, c_void_p
 from ctypes.util import find_library
 
 from osgeo import gdal
@@ -49,15 +50,16 @@ class ConflictResolver(object):
         self.canvas = iface.mapCanvas()
 
         if sys.platform == 'win32':
-            soname = os.path.join(os.path.dirname(__file__), 'cpp', 'build', 'libqgispatches.dll')
+            soname = os.path.join(os.path.dirname(
+                __file__), 'cpp', 'build', 'libqgispatches.dll')
             libqgispatches = CDLL(soname)
         else:
-            soname = os.path.join(os.path.dirname(__file__), 'cpp', 'build', 'libqgispatches.so')
+            soname = os.path.join(os.path.dirname(
+                __file__), 'cpp', 'build', 'libqgispatches.so')
             libqgispatches = CDLL(soname)
 
         assert libqgispatches
         self.libqgispatches = libqgispatches
-
 
     def initGui(self):
         QgsProject.instance().layerWasAdded.connect(self.connectLayer)
@@ -69,7 +71,7 @@ class ConflictResolver(object):
         # Remove the plugin menu item and icon
         pass
 
-    def checkChanges(self, layer):
+    def checkChanges(self, layer, plugin):
 
         assert layer and layer.isValid()
         self.log("Checking changes for %s" % layer.name())
@@ -82,14 +84,16 @@ class ConflictResolver(object):
                 self.log("FID %s changed" % fid)
                 req = QgsFeatureRequest()
                 req.setFilterFid(fid)
-                old_geom = next(layer.dataProvider().getFeatures(req)).geometry()
+                old_geom = next(
+                    layer.dataProvider().getFeatures(req)).geometry()
                 assert old_geom.asWkt() != geom.asWkt()
 
             for fid, attribute_dict in buffer.changedAttributeValues().items():
                 self.log("FID %s changed" % fid)
                 req = QgsFeatureRequest()
                 req.setFilterFid(fid)
-                old_attrs = next(layer.dataProvider().getFeatures(req)).attributes()
+                old_attrs = next(
+                    layer.dataProvider().getFeatures(req)).attributes()
                 self.log(attribute_dict)
 
                 try:
@@ -99,14 +103,16 @@ class ConflictResolver(object):
                 except KeyError:
                     pass
 
-        layer.setAllowCommit(ok)
+        plugin.libqgispatches.setAllowCommit(
+            c_void_p(sip.unwrapinstance(layer)), c_bool(ok))
 
     def connectLayer(self, layer):
 
         self.log("Layer added: %s" % layer.name())
 
         if layer and layer.type() == QgsMapLayerType.VectorLayer:
-            layer.beforeCommitChanges.connect(partial(self.checkChanges, layer))
+            layer.beforeCommitChanges.connect(
+                partial(self.checkChanges, layer, self))
 
 
 if __name__ == "__main__":
