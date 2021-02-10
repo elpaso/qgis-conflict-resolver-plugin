@@ -1,0 +1,1 @@
+# qgis-conflict-resolver-plugin
