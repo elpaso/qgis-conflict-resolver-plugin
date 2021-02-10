@@ -1,0 +1,21 @@
+[general]
+name:Conflict resolver
+description:Feature editing conflict resolver
+
+version:1.0
+qgisMinimumVersion:3.0
+experimental:True
+homepage:http://www.itopen.it/
+repository:https://github.com/elpaso/
+tracker:https://github.com/elpaso/
+about:Feature editing conflict resolver
+
+
+changelog:
+    Version 1.0:
+    * initial implementation
+
+
+icon:icon.png
+email:apasotti@gmail.com
+author:Alessandro Pasotti
